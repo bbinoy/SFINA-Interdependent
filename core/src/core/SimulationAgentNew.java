@@ -152,7 +152,13 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
                 flowLoader=new FlowLoaderNew(flowNetwork, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
                 topologyWriter = new TopologyWriter(flowNetwork, columnSeparator);
                 flowWriter = new FlowWriterNew(flowNetwork, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
+                
+                // Clearing output and peers log files
+                File folder = new File(peersLogDirectory+experimentID+"/");
+                clearOutputFiles(folder);
+                folder.mkdir();
                 clearOutputFiles(new File(experimentOutputFilesLocation));
+                
                 runActiveState();
             }
         });
@@ -345,7 +351,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
      */
     private void initActiveState(){
         timeToken = timeTokenName + getSimulationTime();
-        logger.info("--------------> " + timeToken + " <--------------");
+        logger.info("--------------> " + timeToken + " at peer" + getPeer().getIndexNumber() + " <--------------");
         resetIteration();        
         loadInputData(timeToken);
     }
@@ -612,7 +618,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
         this.setMeasurementDumper(new MeasurementFileDumper(getPeersLogDirectory()+this.getExperimentID()+"/peer-"+getPeer().getIndexNumber()));
         getPeer().getMeasurementLogger().addMeasurementLoggerListener(new MeasurementLoggerListener(){
             public void measurementEpochEnded(MeasurementLog log, int epochNumber){
-                
+                logger.debug("---> Measuring peer" + getPeer().getIndexNumber());
                 getMeasurementDumper().measurementEpochEnded(log, epochNumber);
                 log.shrink(epochNumber, epochNumber+1);
             }
