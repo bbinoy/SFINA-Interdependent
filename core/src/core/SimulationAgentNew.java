@@ -65,6 +65,8 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     private final static String parameterColumnSeparator="=";
     private final static String fileSystemSchema="conf/fileSystem.conf";
     private final static String peersLogDirectory="peerlets-log/";
+    private final static String peerToken="peer";
+    private String peerTokenName;
     private String timeToken;
     private String timeTokenName;
     private String experimentInputFilesLocation;
@@ -117,7 +119,6 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     */
     @Override
     public void start(){
-        scheduleMeasurements();
         this.runBootstraping();
     }
 
@@ -159,6 +160,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
                 folder.mkdir();
                 clearOutputFiles(new File(experimentOutputFilesLocation));
                 
+                scheduleMeasurements();
                 runActiveState();
             }
         });
@@ -282,9 +284,9 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
             ex.printStackTrace();
         }
         this.timeToken=this.timeTokenName+Time.inSeconds(0).toString();
-        String peerToken = "/peer-"+getPeer().getIndexNumber()+"/";
-        this.experimentInputFilesLocation=configurationFilesLocation+experimentID+peerToken+inputDirectoryName;
-        this.experimentOutputFilesLocation=configurationFilesLocation+experimentID+peerToken+outputDirectoryName;
+        this.peerTokenName = "/"+peerToken+"-"+getPeer().getIndexNumber();
+        this.experimentInputFilesLocation=configurationFilesLocation+experimentID+peerTokenName+"/"+inputDirectoryName;
+        this.experimentOutputFilesLocation=configurationFilesLocation+experimentID+peerTokenName+"/"+outputDirectoryName;
         this.eventsLocation=experimentInputFilesLocation+eventsFileName;
         this.sfinaParamLocation=experimentInputFilesLocation+sfinaParamFileName;
         this.backendParamLocation=experimentInputFilesLocation+backendParamFileName;
@@ -615,7 +617,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
      */
     @Override
     public void scheduleMeasurements(){
-        this.setMeasurementDumper(new MeasurementFileDumper(getPeersLogDirectory()+this.getExperimentID()+"/peer-"+getPeer().getIndexNumber()));
+        this.setMeasurementDumper(new MeasurementFileDumper(getPeersLogDirectory()+this.getExperimentID()+peerTokenName));
         getPeer().getMeasurementLogger().addMeasurementLoggerListener(new MeasurementLoggerListener(){
             public void measurementEpochEnded(MeasurementLog log, int epochNumber){
                 logger.debug("---> Measuring peer" + getPeer().getIndexNumber());
