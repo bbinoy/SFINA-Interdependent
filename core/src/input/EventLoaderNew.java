@@ -234,7 +234,7 @@ public class EventLoaderNew {
         switch(linkState){
             case "id":
                 return LinkState.ID;
-            case "from_node_id":;
+            case "from_node_id":
                 return LinkState.FROM_NODE;
             case "to_node_id":
                 return LinkState.TO_NODE;

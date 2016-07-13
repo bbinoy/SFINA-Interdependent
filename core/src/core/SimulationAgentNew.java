@@ -39,6 +39,7 @@ import network.NodeState;
 import org.apache.log4j.Logger;
 import output.TopologyWriter;
 import input.FlowLoaderNew;
+import output.EventWriter;
 import output.FlowWriterNew;
 import protopeer.BasePeerlet;
 import protopeer.Peer;
@@ -75,7 +76,8 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     private String linksLocation;
     private String nodesFlowLocation;
     private String linksFlowLocation;
-    private String eventsLocation;
+    private String eventsInputLocation;
+    private String eventsOutputLocation;
     private String sfinaParamLocation;
     private String backendParamLocation;
     private String columnSeparator;
@@ -86,6 +88,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     private FlowLoaderNew flowLoader;
     private TopologyWriter topologyWriter;
     private FlowWriterNew flowWriter;
+    private EventWriter eventWriter;
     private SfinaParameterLoader sfinaParameterLoader;
     private EventLoaderNew eventLoader;
     private FingerDescriptor myAgentDescriptor;
@@ -148,11 +151,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
             public void timerExpired(Timer timer){
                 logger.info("### "+experimentID+" ###");
                 loadFileSystem(fileSystemSchema);
-                loadExperimentConfigFiles(sfinaParamLocation, backendParamLocation, eventsLocation);
-                topologyLoader=new TopologyLoader(flowNetwork, columnSeparator);
-                flowLoader=new FlowLoaderNew(flowNetwork, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
-                topologyWriter = new TopologyWriter(flowNetwork, columnSeparator);
-                flowWriter = new FlowWriterNew(flowNetwork, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
+                loadExperimentConfigFiles(sfinaParamLocation, backendParamLocation, eventsInputLocation);
                 
                 // Clearing output and peers log files
                 File folder = new File(peersLogDirectory+experimentID+"/");
@@ -160,6 +159,12 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
                 folder.mkdir();
                 clearOutputFiles(new File(experimentOutputFilesLocation));
                 
+                topologyLoader=new TopologyLoader(flowNetwork, columnSeparator);
+                flowLoader=new FlowLoaderNew(flowNetwork, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
+                topologyWriter = new TopologyWriter(flowNetwork, columnSeparator);
+                flowWriter = new FlowWriterNew(flowNetwork, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
+                eventWriter = new EventWriter(eventsOutputLocation, columnSeparator, missingValue, getFlowDomainAgent().getFlowNetworkDataTypes());
+
                 scheduleMeasurements();
                 runActiveState();
             }
@@ -287,7 +292,8 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
         this.peerTokenName = "/"+peerToken+"-"+getPeer().getIndexNumber();
         this.experimentInputFilesLocation=configurationFilesLocation+experimentID+peerTokenName+"/"+inputDirectoryName;
         this.experimentOutputFilesLocation=configurationFilesLocation+experimentID+peerTokenName+"/"+outputDirectoryName;
-        this.eventsLocation=experimentInputFilesLocation+eventsFileName;
+        this.eventsInputLocation=experimentInputFilesLocation+eventsFileName;
+        this.eventsOutputLocation=experimentOutputFilesLocation+eventsFileName;
         this.sfinaParamLocation=experimentInputFilesLocation+sfinaParamFileName;
         this.backendParamLocation=experimentInputFilesLocation+backendParamFileName;
         this.nodesLocation="/"+topologyDirectoryName+nodesFileName;
@@ -425,6 +431,9 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     @Override
     public void executeEvent(FlowNetwork flowNetwork, Event event){
         if(event.getTime() == getSimulationTime()){
+            
+            this.eventWriter.writeEvent(event);
+            
             switch(event.getEventType()){
                 case TOPOLOGY:
                     switch(event.getNetworkComponent()){
