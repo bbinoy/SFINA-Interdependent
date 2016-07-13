@@ -26,20 +26,26 @@ import dsutil.generic.state.State;
 public class Event extends State{
     
     private int time;
+    private int iteration;
     private EventType eventType;
     private NetworkComponent networkComponent;
     private String componentID;
     private Enum parameter;
     private Object value;
     
-    public Event(int time, EventType eventType, NetworkComponent networkComponent, String componentID, Enum parameter, Object value){
+    public Event(int time, int iteration, EventType eventType, NetworkComponent networkComponent, String componentID, Enum parameter, Object value){
         super();
         this.time=time;
+        this.iteration=iteration;
         this.eventType=eventType;
         this.networkComponent=networkComponent;
         this.componentID=componentID;
         this.parameter=parameter;
         this.value=value;
+    }
+    
+    public Event(int time, EventType eventType, NetworkComponent networkComponent, String componentID, Enum parameter, Object value){
+        this(time, 1, eventType, networkComponent, componentID, parameter, value);
     }
 
     /**
@@ -125,5 +131,19 @@ public class Event extends State{
     public void setValue(Object value) {
         this.value = value;
     }
-    
+
+    /**
+     * @return the iteration
+     */
+    public int getIteration() {
+        return iteration;
+    }
+
+    /**
+     * @param iteration the iteration to set
+     */
+    public void setIteration(int iteration) {
+        this.iteration = iteration;
+    }
+
 }

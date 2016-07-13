@@ -154,7 +154,6 @@ public class EventWriter {
         
         try{
             PrintWriter writer = new PrintWriter(new FileWriter(file,true));
-            logger.debug("Writing Event to File: " + eventStrings);
             for (int i=0; i<6; i++){
                 writer.print(eventStrings.get(i));
                 if(i==5)
