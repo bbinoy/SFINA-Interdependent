@@ -18,15 +18,49 @@
 package interdependent;
 
 import network.Link;
+import network.Node;
+import org.apache.log4j.Logger;
+import protopeer.network.NetworkAddress;
 
 /**
- * Same as Link but with InterNode instead of Node as start and end point.
+ * 
  * @author Ben
  */
 public class InterLink extends Link{
+    
+    private static final Logger logger = Logger.getLogger(InterLink.class);
+    
+    private final NetworkAddress startNodeAddress;
+    private final NetworkAddress endNodeAddress;
 
-    public InterLink(String index, boolean activated, InterNode startNode, InterNode endNode) {
+    /**
+     * Instantiates an interdependent link 
+     * which contains the addresses of adjacent nodes.
+     * @param index
+     * @param activated
+     * @param startNode
+     * @param endNode
+     * @param startNodeAddress
+     * @param endNodeAddress 
+     */
+    public InterLink(String index, boolean activated, Node startNode, Node endNode, NetworkAddress startNodeAddress, NetworkAddress endNodeAddress) {
         super(index, activated, startNode, endNode);
+        this.startNodeAddress = startNodeAddress;
+        this.endNodeAddress = endNodeAddress;
+    }
+
+    /**
+     * @return the startNodeAddress
+     */
+    public NetworkAddress getStartNodeAddress() {
+        return startNodeAddress;
+    }
+
+    /**
+     * @return the endNodeAddress
+     */
+    public NetworkAddress getEndNodeAddress() {
+        return endNodeAddress;
     }
 
 }

@@ -15,33 +15,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package InterdepMessage;
+package interdependent;
 
+import event.Event;
+import org.apache.log4j.Logger;
 import protopeer.network.Message;
 
 /**
  *
  * @author Ben
  */
-public class StringMessage extends Message {
-    private String message;
+public class EventMessage extends Message{
+    private static final Logger logger = Logger.getLogger(EventMessage.class);
+    private Event event;
     
-    public StringMessage(String message){
-        this.message=message;
+    public EventMessage(Event event){
+        this.event=event;
     }
 
     /**
-     * @return the message
+     * @return the event
      */
-    public String getMessage() {
-        return message;
+    public Event getEvent() {
+        return event;
     }
 
     /**
-     * @param message the message to set
+     * @param event the event to set
      */
-    public void setMessage(String message) {
-        this.message = message;
+    public void setEvent(Event event) {
+        this.event = event;
     }
     
 }

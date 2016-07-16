@@ -5,7 +5,6 @@
  */
 package input;
 
-import event.FlowNetworkDataTypesInterface;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

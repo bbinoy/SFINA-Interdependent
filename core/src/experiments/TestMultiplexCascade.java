@@ -17,17 +17,15 @@
  */
 package experiments;
 
-import InterdepMessage.InterdependentTopology;
 import core.InterdependentAgent;
-import core.SimulationAgentNew;
+import core.MultiplexCascadeAgent;
+import interdependent.InterdependentNetwork;
 import java.util.ArrayList;
-import java.util.HashMap;
 import org.apache.log4j.Logger;
 import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;
 import protopeer.Peer;
 import protopeer.PeerFactory;
-import protopeer.PeerIdentifier;
 import protopeer.SimulatedExperiment;
 import protopeer.network.NetworkAddress;
 import protopeer.util.quantities.Time;
@@ -36,9 +34,9 @@ import protopeer.util.quantities.Time;
  *
  * @author evangelospournaras
  */
-public class TestInterdependent extends SimulatedExperiment{
+public class TestMultiplexCascade extends SimulatedExperiment{
     
-    private static final Logger logger = Logger.getLogger(TestInterdependent.class);
+    private static final Logger logger = Logger.getLogger(TestMultiplexCascade.class);
     
     private final static String expSeqNum="01";
     
@@ -47,20 +45,20 @@ public class TestInterdependent extends SimulatedExperiment{
     //Simulation Parameters
     private final static int bootstrapTime=2000;
     private final static int runTime=1000;
-    private final static int runDuration=5;
+    private final static int runDuration=7;
     private final static int N=2; // Number of peerlets
     
     
     public static void main(String[] args) {
         Experiment.initEnvironment();
-        TestInterdependent test = new TestInterdependent();
+        TestMultiplexCascade test = new TestMultiplexCascade();
         test.init();
         
         PeerFactory peerFactory = new PeerFactory() {
             public Peer createPeer(int peerIndex, Experiment experiment) {
                 // First network
                 Peer peer = new Peer(peerIndex);
-                peer.addPeerlet(new InterdependentAgent(
+                peer.addPeerlet(new MultiplexCascadeAgent(
                         experimentID, 
                         Time.inMilliseconds(bootstrapTime),
                         Time.inMilliseconds(runTime)));
@@ -78,13 +76,12 @@ public class TestInterdependent extends SimulatedExperiment{
         ArrayList<NetworkAddress> networkAddresses = new ArrayList();
         for(Peer peer : test.getPeers()){
             networkAddresses.add(peer.getNetworkAddress());
-            
         }
-        InterdependentTopology it = new InterdependentTopology(networkAddresses);
-        logger.debug(it.getNetworkAddresses());
+        InterdependentNetwork interTopo = new InterdependentNetwork(networkAddresses);
+        logger.debug(interTopo.getNetworkAddresses());
         for(Peer peer : test.getPeers()){
             InterdependentAgent simuAgent = (InterdependentAgent)peer.getPeerletOfType(InterdependentAgent.class);
-            simuAgent.addTopology(it);
+            simuAgent.addInterdependentNetwork(interTopo);
         }
         
         //run the simulation

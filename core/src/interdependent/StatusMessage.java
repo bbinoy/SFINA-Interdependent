@@ -17,34 +17,33 @@
  */
 package interdependent;
 
-import network.Node;
-import protopeer.network.NetworkAddress;
+import org.apache.log4j.Logger;
+import protopeer.network.Message;
 
 /**
- * In addition to Node contains Protopeer NetworkAddress it belongs to.
+ *
  * @author Ben
  */
-public class InterNode extends Node{
+public class StatusMessage extends Message{
+    private static final Logger logger = Logger.getLogger(StatusMessage.class);
+    private boolean simuFinished;
     
-    private NetworkAddress netAddress;
-
-    public InterNode(String index, boolean activated, NetworkAddress netAddress) {
-        super(index, activated);
-        this.netAddress=netAddress;
+    public StatusMessage(){
+        
     }
 
     /**
-     * @return the netAddress
+     * @return the simuFinished
      */
-    public NetworkAddress getNetAddress() {
-        return netAddress;
+    public boolean isSimuFinished() {
+        return simuFinished;
     }
 
     /**
-     * @param netAddress the netAddress to set
+     * @param simuFinished the simuFinished to set
      */
-    public void setNetAddress(NetworkAddress netAddress) {
-        this.netAddress = netAddress;
+    public void setSimuFinished(boolean simuFinished) {
+        this.simuFinished = simuFinished;
     }
     
 }

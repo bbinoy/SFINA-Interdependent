@@ -17,75 +17,236 @@
  */
 package core;
 
-import InterdepMessage.InterdependentTopology;
-import InterdepMessage.StringMessage;
+import event.Event;
+import event.EventType;
+import event.NetworkComponent;
+import input.SfinaParameter;
+import interdependent.EventMessage;
+import interdependent.InterdependentNetwork;
+import interdependent.StatusMessage;
+import java.io.File;
+import network.FlowNetwork;
+import network.Link;
+import network.LinkState;
+import network.Node;
+import network.NodeState;
 import org.apache.log4j.Logger;
-import java.util.logging.Level;
 import protopeer.network.Message;
 import protopeer.network.NetworkAddress;
 import protopeer.util.quantities.Time;
 
 /**
  *
- * @author evangelospournaras
+ * @author Ben
  */
-public class InterdependentAgent extends SimulationAgentNew{
+public abstract class InterdependentAgent extends SimulationAgentNew{
     
     private static final Logger logger = Logger.getLogger(InterdependentAgent.class);
     
-    private InterdependentTopology interTopology;
+    private InterdependentNetwork interNet;
+    private String interInputName;
+    private String interTopologyInputName;
+    private String interFlowInputName;
+    
     
     public InterdependentAgent(
             String experimentID,
             Time bootstrapTime, 
             Time runTime){
         super(experimentID, bootstrapTime, runTime);
+        this.interInputName = "/interdependence";
+        this.interTopologyInputName = "/topology.txt";
+        this.interFlowInputName = "/flow.txt";
     }
     
-    public void addTopology(InterdependentTopology interdepTop){
-        this.interTopology=interdepTop;
+    public void addInterdependentNetwork(InterdependentNetwork interNet){
+        this.interNet=interNet;
     }
     
     @Override
     public void handleIncomingMessage(Message message) {
-        StringMessage stringMessage = (StringMessage)message;
-        logger.debug("##############################");
-        logger.debug("Incoming message at Peer " + this.getPeer().getIndexNumber());
-        logger.debug("Time: " + this.getPeer().getClock().getCurrentTime());
-        logger.debug("Message: " + stringMessage.getMessage());
-        logger.debug("##############################");
-        if (this.getPeer().getIndexNumber() == 0)
-            this.getPeer().notify();
-        else
-            sendTestMessage();
-    }
-
-    @Override
-    public void handleOutgoingMessage(Message message) {
-        StringMessage stringMessage = (StringMessage)message;
-        logger.debug("##############################");
-        logger.debug("Outgoing message at Peer " + this.getPeer().getIndexNumber());
-        logger.debug("Message: " + stringMessage.getMessage());
-        logger.debug("##############################");   
-        try {
-            this.getPeer().wait();
-        } catch (InterruptedException ex) {
-            java.util.logging.Logger.getLogger(InterdependentAgent.class.getName()).log(Level.SEVERE, null, ex);
+        logger.info("");
+        logger.info("##### Incoming message at Peer " + this.getPeer().getIndexNumber() + " from Peer " + message.getSourceAddress());
+        if(message instanceof EventMessage){
+            EventMessage msg = (EventMessage)message;
+            Event event = msg.getEvent();
+            NetworkAddress sourceAddress = msg.getSourceAddress();
+            processIncomingEventMessage(event, sourceAddress);
+        }
+        if(message instanceof StatusMessage){
+            processIncomingStatusMessage((StatusMessage)message);
         }
     }
     
-    public void sendTestMessage(){
-        logger.debug("Addresses: " + interTopology.getNetworkAddresses());
-        StringMessage message = new StringMessage("Hello World says Peer " + getPeer().getIndexNumber());
-        for (NetworkAddress address : interTopology.getNetworkAddresses())
+    /**
+     * How to process event.
+     * 
+     * @param event
+     * @param sourceAddress 
+     */
+    public abstract void processIncomingEventMessage(Event event, NetworkAddress sourceAddress);
+    
+    
+    /**
+     * How to process event.
+     * 
+     * @param msg
+     */
+    public abstract void processIncomingStatusMessage(StatusMessage msg);
+    
+    /**
+     * Broadcast all executed events to all other peers.
+     * @param event 
+     */
+    public void sendEventMessage(Event event){
+        EventMessage message = new EventMessage(event);
+        if(event.getEventType().equals(EventType.TOPOLOGY) && event.getNetworkComponent().equals(NetworkComponent.NODE) && event.getParameter().equals(NodeState.STATUS)){
+            logger.info("##### Sending topology change message at Peer " + this.getPeer().getIndexNumber());
+            for (NetworkAddress address : getInterdependentNetwork().getNetworkAddresses())
+                if (!address.equals(getPeer().getNetworkAddress()))
+                    getPeer().sendMessage(address, message);
+        }
+    }
+    
+    /**
+     * Broadcast all executed events to all other peers. 
+     * @param message
+     */
+    public void sendStatusMessage(StatusMessage message){
+        logger.info("##### Sending status message at Peer " + this.getPeer().getIndexNumber());
+        for (NetworkAddress address : getInterdependentNetwork().getNetworkAddresses())
             if (!address.equals(getPeer().getNetworkAddress()))
                 getPeer().sendMessage(address, message);
     }
     
+    /**
+     * Initializes the active state for interdependent networks.
+     * - setting iteration = 1 and loading data like for non-interdependent
+     * - loading interdependent links
+     */
     @Override
-    public void runInitialOperations(){
-        if (getPeer().getIndexNumber() == 0){
-            sendTestMessage();
+    public void initActiveState(){
+        this.setTimeToken(this.getTimeTokenName() + this.getSimulationTime());
+        logger.info("");
+        logger.info("");
+        logger.info("--------------> " + this.getTimeToken() + " at peer" + getPeer().getIndexNumber() + " <--------------");
+        resetIteration();        
+        loadInputData(this.getTimeToken());
+        loadInterdependentInputData(this.getTimeToken());
+    }
+    
+    /**
+     * Loads interdependent network data from input files at given time if folder is provided.
+     * @param timeToken 
+     */
+    public void loadInterdependentInputData(String timeToken){
+        File file = new File(this.getExperimentInputFilesLocation()+timeToken);
+        if (file.exists() && file.isDirectory()) {
+            logger.info("loading interdependent data at " + timeToken + " (currently only initializing multiplex network).");
+            String interdependentTopologyLocation = this.getExperimentInputFilesLocation() + timeToken + this.interInputName + this.interTopologyInputName;
+            String interdependentFlowLocation = this.getExperimentInputFilesLocation() + timeToken + this.interInputName + this.interFlowInputName;
+            this.getInterdependentNetwork().updateTopology(this.getFlowNetwork(), this.getPeer().getNetworkAddress(), interdependentTopologyLocation, interdependentFlowLocation, this.getColumnSeparator(), this.getMissingValue(), this.getFlowDomainAgent().getFlowNetworkDataTypes());
         }
+    }
+    
+    /**
+     * Exexutes the event.
+     * Addition to executeEvent in SimulationAgent:
+     * - calls sendEventMessage
+     * - also reloads Interdependent Network in case of reload event
+     * @param flowNetwork
+     * @param event
+     */
+    @Override
+    public void executeEvent(FlowNetwork flowNetwork, Event event){
+        if(event.getTime() == getSimulationTime()){
+            
+            this.getEventWriter().writeEvent(event);
+            this.sendEventMessage(event);
+            
+            switch(event.getEventType()){
+                case TOPOLOGY:
+                    switch(event.getNetworkComponent()){
+                        case NODE:
+                            Node node=flowNetwork.getNode(event.getComponentID());
+                            switch((NodeState)event.getParameter()){
+                                case ID:
+                                    node.setIndex((String)event.getValue());
+                                    break;
+                                case STATUS:
+                                    if(node.isActivated() == (Boolean)event.getValue())
+                                        logger.debug("Node status same, not changed by event.");
+                                    node.setActivated((Boolean)event.getValue()); 
+                                    logger.info("..setting node " + node.getIndex() + " to activated = " + event.getValue());
+                                    break;
+                                default:
+                                    logger.debug("Node state cannot be recognised");
+                            }
+                            break;
+                        case LINK:
+                            Link link=flowNetwork.getLink(event.getComponentID());
+                            link.replacePropertyElement(event.getParameter(), event.getValue());
+                            switch((LinkState)event.getParameter()){
+                                case ID:
+                                    link.setIndex((String)event.getValue());
+                                    break;
+                                case FROM_NODE:
+                                    link.setStartNode(flowNetwork.getNode((String)event.getValue()));
+                                    break;
+                                case TO_NODE:
+                                    link.setEndNode(flowNetwork.getNode((String)event.getValue()));
+                                    break;
+                                case STATUS:
+                                    if(link.isActivated() == (Boolean)event.getValue())
+                                        logger.debug("Link status same, not changed by event.");
+                                    link.setActivated((Boolean)event.getValue()); 
+                                    logger.info("..setting link " + link.getIndex() + " to activated = " + event.getValue());
+                                    break;
+                                default:
+                                    logger.debug("Link state cannot be recognised");
+                            }
+                            break;
+                        default:
+                            logger.debug("Network component cannot be recognised");
+                    }
+                    break;
+                case FLOW:
+                    switch(event.getNetworkComponent()){
+                        case NODE:
+                            Node node=flowNetwork.getNode(event.getComponentID());
+                            node.replacePropertyElement(event.getParameter(), event.getValue());
+                            break;
+                        case LINK:
+                            Link link=flowNetwork.getLink(event.getComponentID());
+                            link.replacePropertyElement(event.getParameter(), event.getValue());
+                            break;
+                        default:
+                            logger.debug("Network component cannot be recognised");
+                    }
+                    break;
+                case SYSTEM:
+                    logger.info("..executing system parameter event: " + (SfinaParameter)event.getParameter());
+                    switch((SfinaParameter)event.getParameter()){
+                        case RELOAD:
+                            loadInputData("time_" + (String)event.getValue());
+                            loadInterdependentInputData(this.getTimeTokenName() + (String)event.getValue());
+                            break;
+                        default:
+                            logger.debug("System parameter cannot be recognized.");
+                    }
+                    break;
+                default:
+                    logger.debug("Event type cannot be recognised");
+            }
+        }
+        else
+            logger.debug("Event not executed because defined for different time step.");
+    }
+    
+    /**
+     * @return the interTopology
+     */
+    public InterdependentNetwork getInterdependentNetwork() {
+        return interNet;
     }
 }

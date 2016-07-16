@@ -61,6 +61,9 @@ public class TopologyLoader {
     }
     
     public void loadNodes(String location){
+        // empty network if it has nodes and links
+        emptyNetwork();
+        
         ArrayList<NodeState> nodeStates=new ArrayList<NodeState>();
         File file = new File(location);
         Scanner scr = null;
@@ -208,5 +211,13 @@ public class TopologyLoader {
                 logger.debug("Link state is not recognized.");
                 return null;
         }
+    }
+    
+    /**
+     *
+     * @return
+     */
+    public FlowNetwork getFlowNetwork(){
+        return net;
     }
 }
