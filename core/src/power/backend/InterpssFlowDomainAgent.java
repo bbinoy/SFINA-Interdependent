@@ -17,6 +17,7 @@
  */
 package power.backend;
 
+import power.input.PowerFlowNetworkDataTypes;
 import backend.FlowDomainAgent;
 import com.interpss.CoreObjectFactory;
 import com.interpss.common.exp.InterpssException;
@@ -65,13 +66,13 @@ public class InterpssFlowDomainAgent extends FlowDomainAgent{
         // Is there a better way to force initializing the FlowNetworkDataTypes class?
         this.setFlowNetworkDataTypes(new PowerFlowNetworkDataTypes()); 
         this.converged = false;
-        logger.debug("initializing Interpss backend");
+        logger.info("initializing Interpss backend");
         IpssCorePlugin.init();
     }
     
     @Override
     public boolean flowAnalysis(FlowNetwork net){
-        logger.debug("calculating loadflow in network with Interpss");
+        logger.info("calculating loadflow in network with Interpss");
         this.SfinaNet = net;
         
         if(net.getNodes().size() == 1)

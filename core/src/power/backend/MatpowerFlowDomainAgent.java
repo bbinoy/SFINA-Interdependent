@@ -17,6 +17,7 @@
  */
 package power.backend;
 
+import power.input.PowerFlowNetworkDataTypes;
 import backend.FlowDomainAgent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +65,7 @@ public class MatpowerFlowDomainAgent extends FlowDomainAgent{
         super(experimentID, bootstrapTime, runTime);
         // Is there a better way to force initializing the FlowNetworkDataTypes class?
         this.setFlowNetworkDataTypes(new PowerFlowNetworkDataTypes()); 
-        logger.debug("initializing Matpower backend");
+        logger.info("initializing Matpower backend");
         MatlabProxyFactoryOptions options = new MatlabProxyFactoryOptions.Builder().setUsePreviouslyControlledSession(true).build();
         factory = new MatlabProxyFactory(options);
         this.converged=false;
@@ -72,7 +73,7 @@ public class MatpowerFlowDomainAgent extends FlowDomainAgent{
     
     @Override
     public boolean flowAnalysis(FlowNetwork net){
-        logger.debug("calculating loadflow in network with Matpower");
+        logger.info("calculating loadflow in network with Matpower");
         this.net = net;
         
         ArrayList<Node> nodes = new ArrayList<>(this.net.getNodes());
