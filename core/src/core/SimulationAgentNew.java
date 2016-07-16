@@ -357,11 +357,11 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     /**
      * Initializes the active state by setting iteration = 1 and loading data.
      */
-    private void initActiveState(){
-        timeToken = timeTokenName + getSimulationTime();
-        logger.info("--------------> " + timeToken + " at peer" + getPeer().getIndexNumber() + " <--------------");
+    public void initActiveState(){
+        this.setTimeToken(this.getTimeTokenName() + this.getSimulationTime());
+        logger.info("--------------> " + this.getTimeToken() + " <--------------");
         resetIteration();        
-        loadInputData(timeToken);
+        loadInputData(timeToken);   
     }
     
     /**
@@ -371,7 +371,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     public void loadInputData(String timeToken){
         File file = new File(experimentInputFilesLocation+timeToken);
         if (file.exists() && file.isDirectory()) {
-            logger.info("loading data at time " + timeToken);
+            logger.info("loading data at " + timeToken);
             topologyLoader.loadNodes(experimentInputFilesLocation+timeToken+nodesLocation);
             topologyLoader.loadLinks(experimentInputFilesLocation+timeToken+linksLocation);
             if (new File(experimentInputFilesLocation+timeToken+nodesFlowLocation).exists() &&
@@ -428,6 +428,11 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
         }
     }
     
+    /**
+     * Executes the event if its time corresponds to the current simulation time.
+     * @param flowNetwork
+     * @param event
+     */
     @Override
     public void executeEvent(FlowNetwork flowNetwork, Event event){
         if(event.getTime() == getSimulationTime()){
@@ -498,7 +503,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
                     logger.info("..executing system parameter event: " + (SfinaParameter)event.getParameter());
                     switch((SfinaParameter)event.getParameter()){
                         case RELOAD:
-                            loadInputData("time_" + (String)event.getValue());
+                            loadInputData(timeTokenName + (String)event.getValue());
                             break;
                         default:
                             logger.debug("System parameter cannot be recognized.");
@@ -619,6 +624,36 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
         return timeToken;
     }
     
+    /**
+     * @param timeToken
+     */
+    public void setTimeToken(String timeToken) {
+        this.timeToken = timeToken;
+    }
+    
+    /**
+     * @return the time token name, i.e. probably "time_"
+     */
+    public String getTimeTokenName() {
+        return timeTokenName;
+    }
+    
+    /**
+     *
+     * @return
+     */
+    public String getMissingValue(){
+        return this.missingValue;
+    }
+    
+    /**
+     *
+     * @return
+     */
+    public String getColumnSeparator(){
+        return this.columnSeparator;
+    }
+    
     //****************** MEASUREMENTS ******************
     
     /**
@@ -662,5 +697,12 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
      */
     public void setMeasurementDumper(MeasurementFileDumper measurementDumper) {
         this.measurementDumper = measurementDumper;
+    }
+
+    /**
+     * @return the eventWriter
+     */
+    public EventWriter getEventWriter() {
+        return eventWriter;
     }
 }
