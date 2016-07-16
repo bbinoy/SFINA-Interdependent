@@ -17,7 +17,7 @@
  */
 package backend;
 
-import event.FlowNetworkDataTypesInterface;
+import input.FlowNetworkDataTypesInterface;
 import java.util.HashMap;
 import network.FlowNetwork;
 import org.apache.log4j.Logger;

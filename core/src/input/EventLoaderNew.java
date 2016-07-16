@@ -21,7 +21,6 @@ import event.Event;
 import event.EventState;
 import event.NetworkComponent;
 import event.EventType;
-import event.FlowNetworkDataTypesInterface;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

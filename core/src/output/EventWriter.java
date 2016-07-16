@@ -18,7 +18,7 @@
 package output;
 
 import event.Event;
-import event.FlowNetworkDataTypesInterface;
+import input.FlowNetworkDataTypesInterface;
 import input.SfinaParameter;
 import java.io.File;
 import java.io.FileWriter;
