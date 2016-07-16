@@ -159,7 +159,9 @@ public class Node extends State{
     }
     
     /**
-     * Returns a new list with all incoming links of the node
+     * Returns a new list with all incoming links of the node.
+     * Independent of their activation/connnection status,
+     * i.e. may contain deactivated or disconnected links.
      * 
      * @return a new array list with the incoming links of the node
      */
@@ -174,7 +176,9 @@ public class Node extends State{
     }
     
     /**
-     * Returns a new list with all outgoing links of the node
+     * Returns a new list with all outgoing links of the node.
+     * Independent of their activation and connection status, 
+     * i.e. may contain deactivated or disconnected links.
      * 
      * @return a new array list with the outgoing links of the node
      */
@@ -216,7 +220,9 @@ public class Node extends State{
     }
 
     /**
-     * Returns the links of the node
+     * Returns the links of the node.
+     * Independent of their activation and connection status, 
+     * i.e. may contain deactivated or disconnected links.
      * 
      * @return the links of the node
      */
@@ -235,15 +241,21 @@ public class Node extends State{
     }
     
     /**
-     * Evaluates the connectivity of the node
+     * Evaluates the connectivity of the node.
+     * It is connected, if at least one activated link is connected to it.
      */
-    private void evaluateConnectivity(){
-        if(links.size()!=0){
-            this.connected=true;
+    public void evaluateConnectivity(){
+        this.connected=false;
+        for (Link link : links){
+            if(link.isActivated() && link.isConnected())
+                this.connected=true;
         }
-        else{
-            this.connected=false;
-        }
+//        if(links.size()!=0){
+//            this.connected=true;
+//        }
+//        else{
+//            this.connected=false;
+//        }
     }
 
     /**
@@ -262,22 +274,25 @@ public class Node extends State{
      */
     public void setActivated(boolean activated) {
         this.activated = activated;
-        if(activated){
-            for(Link link : this.getIncomingLinks()){
-                link.setEndNode(this);
-            }
-            for(Link link : this.getOutgoingLinks()){
-                link.setStartNode(this);
-            }
+        for(Link link : this.getLinks()){
+            link.evaluateConnectivity();
         }
-        else{
-            this.setFlow(0.0);
-            for(Link link:this.getIncomingLinks()){
-                link.setEndNode(null);
-            }
-            for(Link link : this.getOutgoingLinks()){
-                link.setStartNode(null);
-            }
-        }
+//        if(activated){
+//            for(Link link : this.getIncomingLinks()){
+//                link.setEndNode(this);
+//            }
+//            for(Link link : this.getOutgoingLinks()){
+//                link.setStartNode(this);
+//            }
+//        }
+//        else{
+//            this.setFlow(0.0);
+//            for(Link link:this.getIncomingLinks()){
+//                link.setEndNode(null);
+//            }
+//            for(Link link : this.getOutgoingLinks()){
+//                link.setStartNode(null);
+//            }
+//        }
     }
 }

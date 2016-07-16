@@ -18,6 +18,7 @@
 package network;
 
 import dsutil.generic.state.State;
+import interdependent.InterLink;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,7 +102,7 @@ public class FlowNetwork extends State implements FlowNetworkInterface{
      */
     public void addLink(Link link){
         this.links.put(link.getIndex(), link);
-        if(link.isActivated()){
+        if(link.isActivated() && !(link instanceof InterLink)){
             link.getStartNode().addLink(link);
             link.getEndNode().addLink(link);
         }
@@ -320,10 +321,11 @@ public class FlowNetwork extends State implements FlowNetworkInterface{
         ArrayList<Link> currentLinks = (ArrayList)currentNode.getLinks();
         if (currentLinks.size() > 0){
             for (Link link : currentLinks){
-                if (!currentIslandLinks.contains(link))
-                    currentIslandLinks.add(link);
-                // Restart Iteration with EndNode of current Link if it is connected (i.e. has node on other end.
-                if (link.isConnected()){
+                // Only consider link, if it is activated (no failure/damage) and connected (has activated start and end node)
+                if (link.isConnected() && link.isActivated()){
+                    if (!currentIslandLinks.contains(link))
+                        currentIslandLinks.add(link);
+                    // Restart Iteration with EndNode of current Link
                     currentNode = link.getEndNode();
                     if (!currentIslandNodes.contains(currentNode)){
                         iterateIsland(currentNode, currentIslandNodes, currentIslandLinks, leftNodes);
