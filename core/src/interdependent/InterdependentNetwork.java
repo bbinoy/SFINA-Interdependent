@@ -69,18 +69,17 @@ public class InterdependentNetwork extends FlowNetwork{
     /**
      * Adding the FlowNetwork to the InterdependentNetwork.
      * If it wasn't added already.
-     * If it is not the first one which was added, the method to create interdependent
+     * If it is the last one which was added, the method to create interdependent
      * links between all the networks is called.
      * @param net
      * @param address
+     * @param interdependentTopologyLocation
+     * @param interdependentFlowLocation
      * @param columnSeparator
      * @param missingValue
      * @param dataTypesInterface
      */
     public void updateTopology(FlowNetwork net, NetworkAddress address, String interdependentTopologyLocation, String interdependentFlowLocation, String columnSeparator, String missingValue, FlowNetworkDataTypesInterface dataTypesInterface) {
-        if(!this.getNetworkAddresses().contains(address))
-            logger.debug("Trying to add FlowNetwork to InterdependentTopology even though its address is not in NetworkAddress list.");
-        
         logger.info("InterdependentNetwork: adding FlowNetwork at NetworkAddress " + address);    
         this.getInterdependentNetworks().put(address, net);
         
