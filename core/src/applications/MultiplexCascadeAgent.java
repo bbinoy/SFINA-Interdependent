@@ -15,13 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package core;
+package applications;
 
+import core.InterdependentAgent;
 import event.Event;
 import event.EventType;
 import event.NetworkComponent;
 import interdependent.StatusMessage;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import network.FlowNetwork;
@@ -45,8 +45,6 @@ public class MultiplexCascadeAgent extends InterdependentAgent{
     
     // Keeps track of which islands exist in which time step and iteration
     private HashMap<Integer, HashMap<Integer,LinkedHashMap<FlowNetwork, Boolean>>> temporalIslandStatus;
-    private boolean topologyChanged;
-    private ArrayList<StatusMessage> statusMessages;
     
     public MultiplexCascadeAgent(
             String experimentID,
@@ -77,33 +75,12 @@ public class MultiplexCascadeAgent extends InterdependentAgent{
                 if(node.isActivated() != sourceNodeStatus){
                     Event newEvent = new Event(this.getSimulationTime(), this.getIteration(), event.getEventType(), event.getNetworkComponent(), node.getIndex(), event.getParameter(), sourceNodeStatus);
                     this.queueEvent(newEvent);
-                    topologyChanged = true;
+                    setTopologyChanged(true);
                     logger.info("## setting topologyChanged = true");
                 }
                 else
                     logger.info("## No change here.");
             }
-        }
-    }
-    
-    
-    @Override
-    public void processIncomingStatusMessage(StatusMessage msg) {
-        logger.info("## Status Message number " + (statusMessages.size()+1));
-        statusMessages.add(msg);
-        int numberOtherNets = this.getInterdependentNetwork().getNetworkAddresses().size() - 1;
-        // Only react when status messages from all other networks arrived
-        if(statusMessages.size() == numberOtherNets){
-            if(topologyChanged){
-                logger.info("## Topology was changed -> Executing events and calling runFlowAnalysis");
-                logger.info("");
-                // Executing all events (both triggered by other networks and within this one)
-                this.executeAllEvents();
-                // Go to next iteration
-                this.runFlowAnalysis();
-            }
-            else
-                logger.info("## Topology was not changed -> Doing nothing.");
         }
     }
     
@@ -121,12 +98,10 @@ public class MultiplexCascadeAgent extends InterdependentAgent{
      */
     @Override
     public void runFlowAnalysis(){
-        logger.info("");
-        logger.info("----> Iteration " + (getIteration()) + " at peer " + getPeer().getNetworkAddress() + " <----");
-        topologyChanged = false;
-        statusMessages = new ArrayList<>();
+        
+        initRunFlowAnalysis();
         temporalIslandStatus.get(getSimulationTime()).put(getIteration(), new LinkedHashMap());
-
+        
         // Go through all disconnected components (i.e. islands) of current iteration and perform flow analysis
         for(FlowNetwork island : this.getFlowNetwork().computeIslands()){
             logger.info("treating island with " + island.getNodes().size() + " nodes");
@@ -136,24 +111,24 @@ public class MultiplexCascadeAgent extends InterdependentAgent{
                 boolean linkOverloaded = linkOverload(island);
                 boolean nodeOverloaded = nodeOverload(island);
                 if(linkOverloaded || nodeOverloaded){
-                    topologyChanged = true;
+                    setTopologyChanged(true);
                 }
                 else
                     temporalIslandStatus.get(getSimulationTime()).get(getIteration()).put(island, true);
             }
             else{
                 updateNonConvergedIsland(island);
+                setTopologyChanged(true);
                 temporalIslandStatus.get(getSimulationTime()).get(getIteration()).put(island, false);
             }
         }
 
+        logFinalIslands();
         // Output data at current iteration and go to next one
         nextIteration();
 
         // Tell the other networks that we're finished with this iteration
-        StatusMessage finished = new StatusMessage();
-        finished.setSimuFinished(true);
-        this.sendStatusMessage(finished);
+        this.sendStatusMessage(new StatusMessage(true, getIteration()));
     }
     
     
@@ -253,20 +228,19 @@ public class MultiplexCascadeAgent extends InterdependentAgent{
      * Prints final islands in each time step to console
      */
     private void logFinalIslands(){
-//        String log = "--------------> " + temporalIslandStatus.get(getSimulationTime()).size() + " final island(s):\n";
-//        String nodesInIsland;
-//        for (FlowNetwork net : temporalIslandStatus.get(getSimulationTime()).keySet()){
-//            nodesInIsland = "";
-//            for (Node node : net.getNodes())
-//                nodesInIsland += node.getIndex() + ", ";
-//            log += "    - " + net.getNodes().size() + " Node(s) (" + nodesInIsland + ")";
-//            if(temporalIslandStatus.get(getSimulationTime()).get(net))
-//                log += " -> Converged :)\n";
-//            if(!temporalIslandStatus.get(getSimulationTime()).get(net))
-//                log += " -> Blackout\n";
-//        }
-//        logger.info(log);
+        String log = "--------------> " + temporalIslandStatus.get(getSimulationTime()).get(getIteration()).size() + " island(s) at iteration " + getIteration() + ":\n";
+        String nodesInIsland;
+        for (FlowNetwork net : temporalIslandStatus.get(getSimulationTime()).get(getIteration()).keySet()){
+            nodesInIsland = "";
+            for (Node node : net.getNodes())
+                nodesInIsland += node.getIndex() + ", ";
+            log += "    - " + net.getNodes().size() + " Node(s) (" + nodesInIsland + ")";
+            if(temporalIslandStatus.get(getSimulationTime()).get(getIteration()).get(net))
+                log += " -> Converged :)\n";
+            if(!temporalIslandStatus.get(getSimulationTime()).get(getIteration()).get(net))
+                log += " -> Blackout\n";
+        }
+        logger.info(log);
     }    
-
     
 }

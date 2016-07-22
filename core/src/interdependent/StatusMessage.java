@@ -26,24 +26,26 @@ import protopeer.network.Message;
  */
 public class StatusMessage extends Message{
     private static final Logger logger = Logger.getLogger(StatusMessage.class);
-    private boolean simuFinished;
+    private boolean iterationFinished;
+    private int iteration;
     
-    public StatusMessage(){
-        
+    public StatusMessage(boolean isIterationFinished, int iteration){
+        this.iterationFinished = isIterationFinished;
+        this.iteration = iteration;
     }
 
     /**
-     * @return the simuFinished
+     * @return the iterationFinished
      */
-    public boolean isSimuFinished() {
-        return simuFinished;
+    public boolean isIterationFinished() {
+        return iterationFinished;
     }
 
     /**
-     * @param simuFinished the simuFinished to set
+     * @return the iteration
      */
-    public void setSimuFinished(boolean simuFinished) {
-        this.simuFinished = simuFinished;
+    public int getIteration() {
+        return iteration;
     }
-    
+
 }

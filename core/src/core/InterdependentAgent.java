@@ -25,6 +25,8 @@ import interdependent.EventMessage;
 import interdependent.InterdependentNetwork;
 import interdependent.StatusMessage;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Objects;
 import network.FlowNetwork;
 import network.Link;
 import network.LinkState;
@@ -47,6 +49,8 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     private String interInputName;
     private String interTopologyInputName;
     private String interFlowInputName;
+    private boolean topologyChanged;
+    private ArrayList<StatusMessage> statusMessages;
     
     
     public InterdependentAgent(
@@ -61,6 +65,27 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     
     public void addInterdependentNetwork(InterdependentNetwork interNet){
         this.interNet=interNet;
+    }
+    
+    /**
+     * @return the interTopology
+     */
+    public InterdependentNetwork getInterdependentNetwork() {
+        return interNet;
+    }
+    
+    /**
+     * @return the topologyChanged
+     */
+    public boolean isTopologyChanged() {
+        return topologyChanged;
+    }
+
+    /**
+     * @param topologyChanged the topologyChanged to set
+     */
+    public void setTopologyChanged(boolean topologyChanged) {
+        this.topologyChanged = topologyChanged;
     }
     
     @Override
@@ -87,12 +112,37 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     public abstract void processIncomingEventMessage(Event event, NetworkAddress sourceAddress);
     
     
-    /**
-     * How to process event.
-     * 
-     * @param msg
-     */
-    public abstract void processIncomingStatusMessage(StatusMessage msg);
+    public void processIncomingStatusMessage(StatusMessage msg) {
+        logger.info("## Status Message number " + (statusMessages.size()+1));
+        statusMessages.add(msg);
+        int numberOtherNets = this.getInterdependentNetwork().getNumberOfNets() - 1;
+        // Only react when status messages from all other networks arrived
+        if(statusMessages.size() == numberOtherNets){
+            // Set the iteration of this network to the iteration of the other net(s).
+            // This is necessary if there was no change in this network during the last iterations.
+            // Before, check if all the other networks are at the same iterations.
+            ArrayList<Integer> iterations = new ArrayList<>();
+            for(StatusMessage statusMsg : statusMessages)
+                iterations.add(statusMsg.getIteration());
+            for(int i=0; i<iterations.size()-1; i++)
+                if(!Objects.equals(iterations.get(i), iterations.get(i+1)))
+                    logger.debug("Iterations of interdependent networks are not the same, which shouldn't happen.");
+            if(this.getIteration() != msg.getIteration())
+                this.setIteration(msg.getIteration());
+            
+            if(isTopologyChanged()){
+                logger.info("## Topology was changed -> Executing events and calling runFlowAnalysis\n");
+                // Executing all events (both triggered by other networks and within this one)
+                this.executeAllEvents();
+                // Go to next iteration
+                this.runFlowAnalysis();
+            }
+            else{
+                statusMessages = new ArrayList<>();
+                logger.info("## Topology was not changed -> Doing nothing.");
+            }
+        }
+    }
     
     /**
      * Broadcast all executed events to all other peers.
@@ -127,12 +177,16 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     @Override
     public void initActiveState(){
         this.setTimeToken(this.getTimeTokenName() + this.getSimulationTime());
-        logger.info("");
-        logger.info("");
-        logger.info("--------------> " + this.getTimeToken() + " at peer" + getPeer().getIndexNumber() + " <--------------");
+        logger.info("\n\n--------------> " + this.getTimeToken() + " at peer" + getPeer().getIndexNumber() + " <--------------");
         resetIteration();        
         loadInputData(this.getTimeToken());
         loadInterdependentInputData(this.getTimeToken());
+    }
+    
+    public void initRunFlowAnalysis(){
+        logger.info("\n----> Iteration " + (getIteration()) + " at peer " + getPeer().getNetworkAddress() + " <----");
+        setTopologyChanged(false);
+        statusMessages = new ArrayList<>();
     }
     
     /**
@@ -243,10 +297,4 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
             logger.debug("Event not executed because defined for different time step.");
     }
     
-    /**
-     * @return the interTopology
-     */
-    public InterdependentNetwork getInterdependentNetwork() {
-        return interNet;
-    }
 }

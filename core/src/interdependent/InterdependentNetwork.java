@@ -35,23 +35,37 @@ public class InterdependentNetwork extends FlowNetwork{
     
     private static final Logger logger = Logger.getLogger(InterdependentNetwork.class);
     
-    private final ArrayList<NetworkAddress> networkAddresses;
+    private int N; // Number of interconnected networks (i.e. peers)
     private HashMap<NetworkAddress, FlowNetwork> nets;
     private InterdependentTopologyLoader interTopoLoader;
     private InterdependentFlowLoader interFlowLoader;
 
-    public InterdependentNetwork(ArrayList<NetworkAddress> networkAddresses){
-        this.networkAddresses=networkAddresses;
+    public InterdependentNetwork(int N){
+        this.N=N;
         this.nets=new HashMap<>();
+    }
+    
+    /**
+     * @return the Number of Interdependent Networks
+     */
+    public int getNumberOfNets() {
+        return N;
     }
 
     /**
      * @return the networkAddresses
      */
     public Collection<NetworkAddress> getNetworkAddresses() {
-        return networkAddresses;
+        return nets.keySet();
     }
-
+    
+    /**
+     * @return the nets
+     */
+    public HashMap<NetworkAddress, FlowNetwork> getInterdependentNetworks() {
+        return nets;
+    }
+    
     /**
      * Adding the FlowNetwork to the InterdependentNetwork.
      * If it wasn't added already.
@@ -70,7 +84,7 @@ public class InterdependentNetwork extends FlowNetwork{
         logger.info("InterdependentNetwork: adding FlowNetwork at NetworkAddress " + address);    
         this.getInterdependentNetworks().put(address, net);
         
-        if (this.getInterdependentNetworks().keySet().size() == this.getNetworkAddresses().size()) {
+        if (this.getInterdependentNetworks().keySet().size() == N) {
             this.interTopoLoader = new InterdependentTopologyLoader(this, columnSeparator);
             this.interFlowLoader = new InterdependentFlowLoader(this, columnSeparator, missingValue, dataTypesInterface);
             
@@ -84,13 +98,7 @@ public class InterdependentNetwork extends FlowNetwork{
 //            interFlowLoader.loadNodeFlowData(null);
         }
     }
-    
-    /**
-     * @return the nets
-     */
-    public HashMap<NetworkAddress, FlowNetwork> getInterdependentNetworks() {
-        return nets;
-    }
+
     
     public Collection<Node> getTargetNodes(String fromNodeId, NetworkAddress fromAddress, NetworkAddress toAddress) {
         ArrayList<Node> nodes = new ArrayList<>();
@@ -147,12 +155,12 @@ public class InterdependentNetwork extends FlowNetwork{
         if(logDetails){
             logger.debug("### Checking Interdependent Topology ###");
             logger.debug("Number of interlinks: " + this.getInterLinks().size());
-            logger.debug("Number of involved networks: " + this.getInterdependentNetworks().size());
+            logger.debug("Number of involved networks: " + this.getNumberOfNets());
             logger.debug("Network Addresses: " + this.getNetworkAddresses());
             logger.debug("Analyzing links...");
         }
         for(NetworkAddress a : this.getNetworkAddresses())
-            if(!this.getInterdependentNetworks().keySet().contains(a)){
+            if(!this.getNetworkAddresses().contains(a)){
                 intact = false;
                 logger.debug("! NetworkAddress of FlowNetwork not in NetworkAddress list.");
             }
@@ -173,4 +181,5 @@ public class InterdependentNetwork extends FlowNetwork{
         logger.debug("-----> " + intact);
         return intact;
     }
+
 }
