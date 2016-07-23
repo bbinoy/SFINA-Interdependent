@@ -46,6 +46,7 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     private static final Logger logger = Logger.getLogger(InterdependentAgent.class);
     
     private InterdependentNetwork interNet;
+    private String interInputFilesLocation;
     private String interInputName;
     private String interTopologyInputName;
     private String interFlowInputName;
@@ -58,7 +59,8 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
             Time bootstrapTime, 
             Time runTime){
         super(experimentID, bootstrapTime, runTime);
-        this.interInputName = "/interdependence";
+        this.interInputFilesLocation = "experiments/"; 
+        this.interInputName = "/interdependence/";
         this.interTopologyInputName = "/topology.txt";
         this.interFlowInputName = "/flow.txt";
     }
@@ -90,8 +92,7 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     
     @Override
     public void handleIncomingMessage(Message message) {
-        logger.info("");
-        logger.info("##### Incoming message at Peer " + this.getPeer().getIndexNumber() + " from Peer " + message.getSourceAddress());
+        logger.info("\n##### Incoming message at Peer " + this.getPeer().getIndexNumber() + " from Peer " + message.getSourceAddress());
         if(message instanceof EventMessage){
             EventMessage msg = (EventMessage)message;
             Event event = msg.getEvent();
@@ -129,6 +130,8 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
                     logger.debug("Iterations of interdependent networks are not the same, which shouldn't happen.");
             if(this.getIteration() != msg.getIteration())
                 this.setIteration(msg.getIteration());
+            
+            this.updateInterdependentLinks();
             
             if(isTopologyChanged()){
                 logger.info("## Topology was changed -> Executing events and calling runFlowAnalysis\n");
@@ -170,6 +173,13 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     }
     
     /**
+     *
+     */
+    public void updateInterdependentLinks(){
+        
+    };
+    
+    /**
      * Initializes the active state for interdependent networks.
      * - setting iteration = 1 and loading data like for non-interdependent
      * - loading interdependent links
@@ -196,10 +206,11 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
     public void loadInterdependentInputData(String timeToken){
         File file = new File(this.getExperimentInputFilesLocation()+timeToken);
         if (file.exists() && file.isDirectory()) {
-            logger.info("loading interdependent data at " + timeToken + " (currently only initializing multiplex network).");
-            String interdependentTopologyLocation = this.getExperimentInputFilesLocation() + timeToken + this.interInputName + this.interTopologyInputName;
-            String interdependentFlowLocation = this.getExperimentInputFilesLocation() + timeToken + this.interInputName + this.interFlowInputName;
+            logger.info("loading interdependent data at " + timeToken);
+            String interdependentTopologyLocation = this.interInputFilesLocation + this.getExperimentID() + this.interInputName + timeToken + this.interTopologyInputName;
+            String interdependentFlowLocation = this.interInputFilesLocation + this.getExperimentID() + this.interInputName + timeToken + this.interFlowInputName;
             this.getInterdependentNetwork().updateTopology(this.getFlowNetwork(), this.getPeer().getNetworkAddress(), interdependentTopologyLocation, interdependentFlowLocation, this.getColumnSeparator(), this.getMissingValue(), this.getFlowDomainAgent().getFlowNetworkDataTypes());
+            logger.debug(this.getInterdependentNetwork().toString());
         }
     }
     

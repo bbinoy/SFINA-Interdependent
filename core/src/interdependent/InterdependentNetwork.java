@@ -18,6 +18,7 @@
 package interdependent;
 
 import input.FlowNetworkDataTypesInterface;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -80,17 +81,22 @@ public class InterdependentNetwork extends FlowNetwork{
      * @param dataTypesInterface
      */
     public void updateTopology(FlowNetwork net, NetworkAddress address, String interdependentTopologyLocation, String interdependentFlowLocation, String columnSeparator, String missingValue, FlowNetworkDataTypesInterface dataTypesInterface) {
-        logger.info("InterdependentNetwork: adding FlowNetwork at NetworkAddress " + address);    
-        this.getInterdependentNetworks().put(address, net);
-        
+        this.nets.put(address, net);
+        logger.debug("Interdependent network: Added FlowNetwork at address " + address);
         if (this.getInterdependentNetworks().keySet().size() == N) {
             this.interTopoLoader = new InterdependentTopologyLoader(this, columnSeparator);
             this.interFlowLoader = new InterdependentFlowLoader(this, columnSeparator, missingValue, dataTypesInterface);
             
-            // Currently this just loads a multiplex network (i.e. 1-to-1 correspondance of nodes)
-            // Todo: Implement loaders for InterLinks
-            interTopoLoader.loadLinks(interdependentTopologyLocation);
-            interFlowLoader.loadLinkFlowData(interdependentFlowLocation);
+            File file = new File(interdependentTopologyLocation);
+            if (file.exists())
+                interTopoLoader.loadLinks(interdependentTopologyLocation);
+            else
+                logger.debug("No interdependent link topology file provided.");
+            file = new File(interdependentFlowLocation);
+            if (file.exists())
+                interFlowLoader.loadLinkFlowData(interdependentFlowLocation);
+            else
+                logger.debug("No interdependent link flow file provided.");
             
             // Don't need nodes for interdependent net
 //            interTopoLoader.loadNodes(null);
@@ -135,6 +141,15 @@ public class InterdependentNetwork extends FlowNetwork{
             return (InterLink)link;
         else 
             throw new ClassCastException("Link in InterdependentTopology can't be cast to InterLink.");
+    }
+    
+    @Override
+    public Collection<Node> getNodes(){
+        ArrayList<Node> nodes = new ArrayList<>();
+        for(FlowNetwork net : this.getInterdependentNetworks().values()){
+            nodes.addAll(net.getNodes());
+        }
+        return nodes;
     }
 
     @Override

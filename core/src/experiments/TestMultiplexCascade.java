@@ -18,16 +18,14 @@
 package experiments;
 
 import core.InterdependentAgent;
-import core.MultiplexCascadeAgent;
+import applications.MultiplexCascadeAgent;
 import interdependent.InterdependentNetwork;
-import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;
 import protopeer.Peer;
 import protopeer.PeerFactory;
 import protopeer.SimulatedExperiment;
-import protopeer.network.NetworkAddress;
 import protopeer.util.quantities.Time;
 
 /**
@@ -72,16 +70,10 @@ public class TestMultiplexCascade extends SimulatedExperiment{
         test.initPeers(0,N,peerFactory);
         test.startPeers(0,N);
         
-        //distribute network addresses to all peers
-        ArrayList<NetworkAddress> networkAddresses = new ArrayList();
-        for(Peer peer : test.getPeers()){
-            networkAddresses.add(peer.getNetworkAddress());
-        }
-        InterdependentNetwork interTopo = new InterdependentNetwork(networkAddresses);
-        logger.debug(interTopo.getNetworkAddresses());
+        InterdependentNetwork interNetwork = new InterdependentNetwork(N);
         for(Peer peer : test.getPeers()){
             InterdependentAgent simuAgent = (InterdependentAgent)peer.getPeerletOfType(InterdependentAgent.class);
-            simuAgent.addInterdependentNetwork(interTopo);
+            simuAgent.addInterdependentNetwork(interNetwork);
         }
         
         //run the simulation

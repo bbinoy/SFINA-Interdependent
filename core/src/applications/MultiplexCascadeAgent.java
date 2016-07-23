@@ -228,7 +228,7 @@ public class MultiplexCascadeAgent extends InterdependentAgent{
      * Prints final islands in each time step to console
      */
     private void logFinalIslands(){
-        String log = "--------------> " + temporalIslandStatus.get(getSimulationTime()).get(getIteration()).size() + " island(s) at iteration " + getIteration() + ":\n";
+        String log = "----> " + temporalIslandStatus.get(getSimulationTime()).get(getIteration()).size() + " island(s) at iteration " + getIteration() + ":\n";
         String nodesInIsland;
         for (FlowNetwork net : temporalIslandStatus.get(getSimulationTime()).get(getIteration()).keySet()){
             nodesInIsland = "";

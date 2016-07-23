@@ -43,9 +43,4 @@ public class InterdependentFlowLoader extends FlowLoaderNew{
     public void loadNodeFlowData(String location){
         logger.debug("Method loadNodeFlowData doesn't make sense for interdependent network.");
     }
-    
-    @Override
-    public void loadLinkFlowData(String location){
-        logger.debug("Loader for link flow data not yet implemented in InterdependentFlowLoader.java.");
-    }
 }
