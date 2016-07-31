@@ -54,6 +54,14 @@ public class InterdependentNetwork extends FlowNetwork{
     }
 
     /**
+     *
+     * @param address
+     */
+    public void addNetworkAddress(NetworkAddress address){
+        nets.put(address, null);
+    }
+    
+    /**
      * @return the networkAddresses
      */
     public Collection<NetworkAddress> getNetworkAddresses() {
@@ -80,13 +88,23 @@ public class InterdependentNetwork extends FlowNetwork{
      * @param missingValue
      * @param dataTypesInterface
      */
-    public void updateTopology(FlowNetwork net, NetworkAddress address, String interdependentTopologyLocation, String interdependentFlowLocation, String columnSeparator, String missingValue, FlowNetworkDataTypesInterface dataTypesInterface) {
+    public void updateNetwork(FlowNetwork net, NetworkAddress address, String interdependentTopologyLocation, String interdependentFlowLocation, String columnSeparator, String missingValue, FlowNetworkDataTypesInterface dataTypesInterface) {
         this.nets.put(address, net);
         logger.debug("Interdependent network: Added FlowNetwork at address " + address);
-        if (this.getInterdependentNetworks().keySet().size() == N) {
-            this.interTopoLoader = new InterdependentTopologyLoader(this, columnSeparator);
-            this.interFlowLoader = new InterdependentFlowLoader(this, columnSeparator, missingValue, dataTypesInterface);
-            
+        
+        this.interTopoLoader = new InterdependentTopologyLoader(this, columnSeparator);
+        this.interFlowLoader = new InterdependentFlowLoader(this, columnSeparator, missingValue, dataTypesInterface);
+        
+        // Currently it loads N times, initiated by every peer. But always removes links first, so no problem.
+        boolean networkMissing = false;
+        boolean flowExists = false;
+        for(FlowNetwork n : nets.values())
+            if(n == null)
+                networkMissing = true;
+        for(Link link : this.getLinks())
+            if(!networkMissing && link.getFlow() != 0.0)
+                flowExists = true;
+        if(!networkMissing && !flowExists){
             File file = new File(interdependentTopologyLocation);
             if (file.exists())
                 interTopoLoader.loadLinks(interdependentTopologyLocation);
@@ -97,10 +115,10 @@ public class InterdependentNetwork extends FlowNetwork{
                 interFlowLoader.loadLinkFlowData(interdependentFlowLocation);
             else
                 logger.debug("No interdependent link flow file provided.");
-            
+
             // Don't need nodes for interdependent net
-//            interTopoLoader.loadNodes(null);
-//            interFlowLoader.loadNodeFlowData(null);
+    //            interTopoLoader.loadNodes(null);
+    //            interFlowLoader.loadNodeFlowData(null);
         }
     }
 
@@ -116,18 +134,43 @@ public class InterdependentNetwork extends FlowNetwork{
     }
     
     /**
+     *
+     * @param networkAddress
+     * @return Links that point to the network at the given address
+     */
+    public Collection<InterLink> getIncomingInterLinks(NetworkAddress networkAddress){
+        ArrayList<InterLink> incomingLinks = new ArrayList<>();
+        for (InterLink link : getInterLinks())
+            if(link.getEndNodeAddress().equals(networkAddress))
+                incomingLinks.add(link);
+        return incomingLinks;
+    }
+    
+    /**
+     *
+     * @param networkAddress
+     * @return Links that point away from the network at the given address
+     */
+    public Collection<InterLink> getOutgoingInterLinks(NetworkAddress networkAddress){
+        ArrayList<InterLink> outgoingLinks = new ArrayList<>();
+        for (InterLink link : getInterLinks())
+            if(link.getStartNodeAddress().equals(networkAddress))
+                outgoingLinks.add(link);
+        return outgoingLinks;
+    }
+    
+    /**
      * @return the interLinks
      */
     public Collection<InterLink> getInterLinks() {
-        Collection<Link> before = this.getLinks();
-        ArrayList<InterLink> after = new ArrayList<>();
-        for (Link link : before){
+        ArrayList<InterLink> interLinks = new ArrayList<>();
+        for (Link link : this.getLinks()){
             if(link instanceof InterLink)
-                after.add((InterLink)link);
+                interLinks.add((InterLink)link);
             else
-                throw new ClassCastException("Link in InterdependentTopology can't be cast to InterLink.");
+                throw new ClassCastException("Link in InterdependentNetwork can't be cast to InterLink.");
         }
-        return (Collection<InterLink>)after;
+        return interLinks;
     }
     
     /**
@@ -140,16 +183,7 @@ public class InterdependentNetwork extends FlowNetwork{
         if(link instanceof InterLink)
             return (InterLink)link;
         else 
-            throw new ClassCastException("Link in InterdependentTopology can't be cast to InterLink.");
-    }
-    
-    @Override
-    public Collection<Node> getNodes(){
-        ArrayList<Node> nodes = new ArrayList<>();
-        for(FlowNetwork net : this.getInterdependentNetworks().values()){
-            nodes.addAll(net.getNodes());
-        }
-        return nodes;
+            throw new ClassCastException("Link in InterdependentNetwork can't be cast to InterLink.");
     }
 
     @Override
@@ -157,9 +191,9 @@ public class InterdependentNetwork extends FlowNetwork{
         String string = "";
         string += "---- Interlinks ----\n";
         string += String.format("%-10s%-20s%-20s\n", "", "StartNode", "EndNode");
-        string += String.format("%-10s%-10s%-10s%-10s%-10s\n", "Link ID", "ID", "Address", "ID", "Address");
+        string += String.format("%-10s%-10s%-10s%-10s%-10s%-10s\n", "Link ID", "ID", "Address", "ID", "Address", "Flow");
         for (InterLink link : this.getInterLinks()) {
-            string += String.format("%-10s%-10s%-10s%-10s%-10s\n", link.getIndex(), link.getStartNode().getIndex(), link.getStartNodeAddress(), link.getEndNode().getIndex(), link.getEndNodeAddress());
+            string += String.format("%-10s%-10s%-10s%-10s%-10s%-10s\n", link.getIndex(), link.getStartNode().getIndex(), link.getStartNodeAddress(), link.getEndNode().getIndex(), link.getEndNodeAddress(), link.getFlow());
         }
         return string += "--------------------";
     }

@@ -70,6 +70,7 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     private String peerTokenName;
     private String timeToken;
     private String timeTokenName;
+    private String experimentBaseFolderLocation;
     private String experimentInputFilesLocation;
     private String experimentOutputFilesLocation;
     private String nodesLocation;
@@ -290,8 +291,9 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
         }
         this.timeToken=this.timeTokenName+Time.inSeconds(0).toString();
         this.peerTokenName = "/"+peerToken+"-"+getPeer().getIndexNumber();
-        this.experimentInputFilesLocation=configurationFilesLocation+experimentID+peerTokenName+"/"+inputDirectoryName;
-        this.experimentOutputFilesLocation=configurationFilesLocation+experimentID+peerTokenName+"/"+outputDirectoryName;
+        this.experimentBaseFolderLocation=configurationFilesLocation+experimentID;
+        this.experimentInputFilesLocation=experimentBaseFolderLocation+peerTokenName+"/"+inputDirectoryName;
+        this.experimentOutputFilesLocation=experimentBaseFolderLocation+peerTokenName+"/"+outputDirectoryName;
         this.eventsInputLocation=experimentInputFilesLocation+eventsFileName;
         this.eventsOutputLocation=experimentOutputFilesLocation+eventsFileName;
         this.sfinaParamLocation=experimentInputFilesLocation+sfinaParamFileName;
@@ -566,6 +568,14 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     }
     
     /**
+     * 
+     * @param iteration
+     */
+    public void setIteration(int iteration){
+        this.iteration=iteration;
+    }
+    
+    /**
      * @return the events
      */
     public ArrayList<Event> getEvents() {
@@ -613,8 +623,8 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
     /**
      * @return the experimentInputFilesLocation
      */
-    public String getExperimentInputFilesLocation() {
-        return experimentInputFilesLocation;
+    public String getExperimentBaseFolderLocation() {
+        return experimentBaseFolderLocation;
     }
     
     /**
@@ -652,6 +662,27 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
      */
     public String getColumnSeparator(){
         return this.columnSeparator;
+    }
+    
+    /**
+     * @return the linksLocation
+     */
+    public String getLinksLocation() {
+        return linksLocation;
+    }
+
+    /**
+     * @return the linksFlowLocation
+     */
+    public String getLinksFlowLocation() {
+        return linksFlowLocation;
+    }
+    
+    /**
+     * @return the eventWriter
+     */
+    public EventWriter getEventWriter() {
+        return eventWriter;
     }
     
     //****************** MEASUREMENTS ******************
@@ -699,10 +730,4 @@ public class SimulationAgentNew extends BasePeerlet implements SimulationAgentIn
         this.measurementDumper = measurementDumper;
     }
 
-    /**
-     * @return the eventWriter
-     */
-    public EventWriter getEventWriter() {
-        return eventWriter;
-    }
 }

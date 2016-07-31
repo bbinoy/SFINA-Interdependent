@@ -17,11 +17,12 @@
  */
 package interdependent;
 
-import input.TopologyLoader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import network.FlowNetwork;
@@ -55,7 +56,12 @@ public class InterdependentTopologyLoader{
     }
     
     public void loadLinks(String location){
-        //ArrayList<Node> nodes = new ArrayList<Node>(interNet.getNodes());
+        // Remove links to prevent links to be added multiple times (can happen if they don't have same indices in each time step)
+        if (!interNet.getLinks().isEmpty()){
+            ArrayList<Link> links = new ArrayList<>(interNet.getLinks());
+            for (Link link : links)
+                interNet.removeLink(link);
+        }
         HashMap<NetworkAddress, FlowNetwork> nets = interNet.getInterdependentNetworks();
         ArrayList<LinkState> linkStates=new ArrayList<LinkState>();
         File file = new File(location);
@@ -70,14 +76,12 @@ public class InterdependentTopologyLoader{
                     linkStates.add(linkState);
                 }
             }
-            logger.debug(linkStates);
             while(scr.hasNext()){
                 ArrayList<String> values=new ArrayList<String>();
                 StringTokenizer st = new StringTokenizer(scr.next(), columnSeparator);
                 while(st.hasMoreTokens()){
                     values.add(st.nextToken());
                 }
-                logger.debug(values);
                 String linkIndex=(String)this.getActualLinkValue(linkStates.get(0), values.get(0));
                 String startNodeIndex=(String)this.getActualLinkValue(linkStates.get(1), values.get(1));
                 String startNetIndex=(String)this.getActualLinkValue(linkStates.get(2), values.get(2));
