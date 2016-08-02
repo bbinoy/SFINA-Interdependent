@@ -204,12 +204,12 @@ public abstract class InterdependentAgent extends SimulationAgentNew{
      * @param timeToken 
      */
     public void loadInterdependentInputData(String timeToken){
-        File file = new File(this.getExperimentInputFilesLocation()+timeToken);
+        File file = new File(this.getExperimentBaseFolderLocation()+timeToken);
         if (file.exists() && file.isDirectory()) {
             logger.info("loading interdependent data at " + timeToken);
             String interdependentTopologyLocation = this.interInputFilesLocation + this.getExperimentID() + this.interInputName + timeToken + this.interTopologyInputName;
             String interdependentFlowLocation = this.interInputFilesLocation + this.getExperimentID() + this.interInputName + timeToken + this.interFlowInputName;
-            this.getInterdependentNetwork().updateTopology(this.getFlowNetwork(), this.getPeer().getNetworkAddress(), interdependentTopologyLocation, interdependentFlowLocation, this.getColumnSeparator(), this.getMissingValue(), this.getFlowDomainAgent().getFlowNetworkDataTypes());
+            this.getInterdependentNetwork().updateNetwork(this.getFlowNetwork(), this.getPeer().getNetworkAddress(), interdependentTopologyLocation, interdependentFlowLocation, this.getColumnSeparator(), this.getMissingValue(), this.getFlowDomainAgent().getFlowNetworkDataTypes());
             logger.debug(this.getInterdependentNetwork().toString());
         }
     }
