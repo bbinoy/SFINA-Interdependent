@@ -111,8 +111,12 @@ public abstract class InterdependentAgentNoEvents extends SimulationAgentNew{
             // This is necessary if there was no change in this network during the last iterations.
             // Before, check if all the other networks are at the same iterations.
             ArrayList<Integer> iterations = new ArrayList<>();
-            for(StatusMessage statusMsg : statusMessages)
+            Boolean netsChanged = false;
+            for(StatusMessage statusMsg : statusMessages){
                 iterations.add(statusMsg.getIteration());
+                if(statusMsg.isNetworkChanged())
+                    netsChanged = true;
+            }
             iterations.add(getIteration());
             for(int i=0; i<iterations.size()-1; i++)
                 if(iterations.get(i) - iterations.get(i+1) > 1){
@@ -128,9 +132,14 @@ public abstract class InterdependentAgentNoEvents extends SimulationAgentNew{
                 this.executeAllEvents();
                 // Go to next iteration
                 this.runFlowAnalysis();
+                // Tell the other networks that we're finished with this iteration
+                this.sendStatusMessage(new StatusMessage(isNetworkChanged(), getIteration()));
             }
             else{
                 statusMessages = new ArrayList<>();
+                this.setIteration(this.getIteration()+1);
+                if(netsChanged)
+                    this.sendStatusMessage(new StatusMessage(false, getIteration()));
                 logger.info("## Topology was not changed -> Doing nothing.");
             }
         }

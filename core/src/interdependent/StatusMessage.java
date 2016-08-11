@@ -26,19 +26,19 @@ import protopeer.network.Message;
  */
 public class StatusMessage extends Message{
     private static final Logger logger = Logger.getLogger(StatusMessage.class);
-    private boolean iterationFinished;
+    private boolean networkChanged;
     private int iteration;
     
-    public StatusMessage(boolean isIterationFinished, int iteration){
-        this.iterationFinished = isIterationFinished;
+    public StatusMessage(boolean isNetworkChanged, int iteration){
+        this.networkChanged = isNetworkChanged;
         this.iteration = iteration;
     }
 
     /**
-     * @return the iterationFinished
+     * @return the networkChanged
      */
-    public boolean isIterationFinished() {
-        return iterationFinished;
+    public boolean isNetworkChanged() {
+        return networkChanged;
     }
 
     /**
