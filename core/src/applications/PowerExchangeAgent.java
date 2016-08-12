@@ -121,7 +121,6 @@ public class PowerExchangeAgent extends InterdependentAgentNoEvents{
             for (Node node : net.getNodes()){
                 Event event = new Event(getSimulationTime(), EventType.TOPOLOGY, NetworkComponent.NODE, node.getIndex(), NodeState.STATUS, false);
                 queueEvent(event);
-                setNetworkChanged(true);
             }
             temporalIslandStatus.get(getSimulationTime()).get(getIteration()).put(net, false);
         }
@@ -160,6 +159,8 @@ public class PowerExchangeAgent extends InterdependentAgentNoEvents{
 
         // Output data at current iteration and go to next one
         nextIteration();
+        // Tell the other networks that we're finished with this iteration
+        this.sendStatusMessage(new StatusMessage(isNetworkChanged(), getIteration()));
     }
     
     

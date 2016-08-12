@@ -132,15 +132,13 @@ public abstract class InterdependentAgentNoEvents extends SimulationAgentNew{
                 this.executeAllEvents();
                 // Go to next iteration
                 this.runFlowAnalysis();
-                // Tell the other networks that we're finished with this iteration
-                this.sendStatusMessage(new StatusMessage(isNetworkChanged(), getIteration()));
             }
             else{
                 statusMessages = new ArrayList<>();
                 this.setIteration(this.getIteration()+1);
+                logger.info("## Topology was not changed -> Doing nothing.");
                 if(netsChanged)
                     this.sendStatusMessage(new StatusMessage(false, getIteration()));
-                logger.info("## Topology was not changed -> Doing nothing.");
             }
         }
     }
